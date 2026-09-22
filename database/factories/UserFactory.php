@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\TeamRole;
+use App\Enums\WmsRole;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -35,6 +36,7 @@ class UserFactory extends Factory
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
+            'wms_role' => null,
         ];
     }
 
@@ -54,6 +56,20 @@ class UserFactory extends Factory
 
             $user->switchTeam($team);
         });
+    }
+
+    public function wmsAdmin(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'wms_role' => WmsRole::Admin,
+        ]);
+    }
+
+    public function wmsOperator(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'wms_role' => WmsRole::WarehouseOperator,
+        ]);
     }
 
     /**

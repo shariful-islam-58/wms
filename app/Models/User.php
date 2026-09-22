@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Concerns\HasTeams;
+use App\Enums\WmsRole;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -15,6 +16,7 @@ use Illuminate\Support\Carbon;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Laravel\Sanctum\HasApiTokens;
 
 /**
  * @property int $id
@@ -27,6 +29,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $two_factor_confirmed_at
  * @property string|null $remember_token
  * @property int|null $current_team_id
+ * @property WmsRole|null $wms_role
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Team|null $currentTeam
@@ -34,12 +37,12 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property-read Collection<int, Membership> $teamMemberships
  * @property-read Collection<int, Team> $teams
  */
-#[Fillable(['name', 'email', 'password', 'current_team_id'])]
+#[Fillable(['name', 'email', 'password', 'current_team_id', 'wms_role'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasTeams, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+    use HasApiTokens, HasFactory, HasTeams, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
     /**
      * Get the attributes that should be cast.
@@ -52,6 +55,17 @@ class User extends Authenticatable implements PasskeyUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
+            'wms_role' => WmsRole::class,
         ];
+    }
+
+    public function hasWmsAccess(): bool
+    {
+        return $this->wms_role !== null;
+    }
+
+    public function isWmsAdmin(): bool
+    {
+        return $this->wms_role === WmsRole::Admin;
     }
 }

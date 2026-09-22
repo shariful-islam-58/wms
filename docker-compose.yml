@@ -1,0 +1,64 @@
+services:
+  app:
+    image: serversideup/php:8.4-fpm-nginx
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+    ports:
+      - "8080:8080"
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: wms
+      DB_USERNAME: wms
+      DB_PASSWORD: secret
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      QUEUE_CONNECTION: redis
+      CACHE_STORE: redis
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: wms
+      POSTGRES_USER: wms
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - wms_pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  queue:
+    image: serversideup/php:8.4-cli
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+    command: php artisan queue:work redis --sleep=1 --tries=3
+    environment:
+      APP_ENV: local
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: wms
+      DB_USERNAME: wms
+      DB_PASSWORD: secret
+      REDIS_HOST: redis
+      QUEUE_CONNECTION: redis
+    depends_on:
+      - postgres
+      - redis
+      - app
+
+volumes:
+  wms_pgdata:
